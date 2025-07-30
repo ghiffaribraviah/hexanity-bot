@@ -10,8 +10,14 @@ const client = new Client({
     authStrategy: new LocalAuth()
 });
 
-client.once('ready', () => {
+client.once('ready', async () => {
     console.log('Client is ready!');
+    try {
+        const result = await sendMessageToTarget('+6281286714480', 'Pesan otomatis dari bot saat client ready!');
+        console.log(result);
+    } catch (err) {
+        console.error('Gagal kirim pesan:', err.message);
+    }
 });
 
 client.on('qr', (qr) => {
@@ -62,3 +68,13 @@ client.on('message_create', message => {
 });
 
 client.initialize();
+
+// Ini fungsi buat kirim pesan ke nomor target, bisa dipanggil dari API yang dipake buat cron job
+async function sendMessageToTarget(number, text) {
+    // Format nomor: +628xxxxxxx
+    const chatId = number.replace('+', '') + '@c.us';
+    await client.sendMessage(chatId, text);
+    return `Message sent to ${number}`;
+}
+
+export { client, sendMessageToTarget };
