@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "test.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:wa": "node whatsapp.js",
+    "start:api": "node api.js",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -24,6 +27,6 @@
     "google-spreadsheet": "^4.1.5",
     "node-cron": "^4.2.1",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.31.0"
+    "whatsapp-web.js": "^1.23.0"
   }
 }

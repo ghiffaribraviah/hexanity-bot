@@ -8,12 +8,8 @@ app.use(express.json());
 
 // Endpoint untuk trigger pengiriman pesan WhatsApp
 app.post('/send-message', async (req, res) => {
-    const { number, text } = req.body;
-    if (!number || !text) {
-        return res.status(400).send('Number and text are required');
-    }
     try {
-        const result = await sendMessageToTarget(number, text);
+        const result = await sendMessageToTarget();
         res.status(200).send(result);
     } catch (err) {
         res.status(500).send('Failed to send message: ' + err.message);

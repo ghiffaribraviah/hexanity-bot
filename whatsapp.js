@@ -12,12 +12,17 @@ const client = new Client({
 
 client.once('ready', async () => {
     console.log('Client is ready!');
-    try {
-        const result = await sendMessageToTarget('+6281286714480', 'Pesan otomatis dari bot saat client ready!');
-        console.log(result);
-    } catch (err) {
-        console.error('Gagal kirim pesan:', err.message);
-    }
+    // Fetch all chats
+    const chats = await client.getChats();
+
+    // Filter group chats
+    const groups = chats.filter(chat => chat.isGroup);
+
+    // List group names and IDs
+    groups.forEach(group => {
+        console.log(`Group Name: ${group.name}`);
+        console.log(`Group ID: ${group.id._serialized}`);
+    });
 });
 
 client.on('qr', (qr) => {
@@ -70,10 +75,12 @@ client.on('message_create', message => {
 client.initialize();
 
 // Ini fungsi buat kirim pesan ke nomor target, bisa dipanggil dari API yang dipake buat cron job
-async function sendMessageToTarget(number, text) {
-    // Format nomor: +628xxxxxxx
-    const chatId = number.replace('+', '') + '@c.us';
-    await client.sendMessage(chatId, text);
+async function sendMessageToTarget() {
+    const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
+    const chatId = number.replace('+', '') + '@g.us';
+
+    let message = textRekap();
+    await client.sendMessage(chatId, message);
     return `Message sent to ${number}`;
 }
 
