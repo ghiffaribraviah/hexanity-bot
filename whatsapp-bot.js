@@ -62,11 +62,6 @@ const HexanityBot = async () => {
         }),
     });
 
-    client.once("ready", () => {
-        isReady = true;
-        console.log("✅ Client is ready!");
-    });
-
     client.on("qr", (qr) => {
         console.log("⚡ Scan this QR code:");
         qrcode.generate(qr, { small: true });
@@ -74,6 +69,15 @@ const HexanityBot = async () => {
 
     client.on("remote_session_saved", async () => {
         console.log("💾 Remote session saved");
+        try {
+            const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
+            const chatId = number.replace('+', '') + '@g.us';
+            let message = 'Hai, saya kembali hidup!';
+            await client.sendMessage(chatId, message);
+            console.log(`Message sent to ${number}`);
+        } catch (err) {
+            console.error('Gagal kirim pesan otomatis:', err.message);
+        }
     });
 
     client.on('message_create', message => {
@@ -82,7 +86,15 @@ const HexanityBot = async () => {
         }
     });
 
-    client.initialize();
+    client.once("ready", () => {
+        isReady = true;
+        console.log("✅ Client is ready!");
+    });
+
+    // Tambahkan delay sebelum inisialisasi client
+    setTimeout(() => {
+        client.initialize();
+    }, 10000);
 };
 
 // Fungsi untuk kirim pesan ke nomor target, dipanggil dari API/cron job
