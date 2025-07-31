@@ -56,6 +56,9 @@ const HexanityBot = async () => {
     const store = new MongoStore({ mongoose: mongoose });
 
     client = new Client({
+        puppeteer: {
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        },
         authStrategy: new RemoteAuth({
         store: store,
         backupSyncIntervalMs: 300000,
