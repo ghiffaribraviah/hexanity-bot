@@ -74,16 +74,6 @@ const HexanityBot = async () => {
 
     client.on("remote_session_saved", async () => {
         console.log("💾 Remote session saved");
-        // Trigger pengiriman pesan otomatis setelah session tersimpan
-        try {
-            const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
-            const chatId = number.replace('+', '') + '@g.us';
-            let message = textRekap();
-            await client.sendMessage(chatId, message);
-            console.log(`Message sent to ${number}`);
-        } catch (err) {
-            console.error('Gagal kirim pesan otomatis:', err.message);
-        }
     });
 
     client.on('message_create', message => {

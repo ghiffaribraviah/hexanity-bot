@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Endpoint untuk trigger pengiriman pesan WhatsApp otomatis
-app.post('/send-message', async (req, res) => {
+app.post('/send-message                                                                                                                                                                                                                                                                                     ', async (req, res) => {
     try {
         const result = await sendMessageToTarget();
         res.status(200).send(result);
