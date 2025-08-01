@@ -49,52 +49,94 @@ const mongoose = mongoosepkg;
 let client;
 let isReady = false;
 const HexanityBot = async () => {
-    const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/hexanity-bot";
-    await mongoose.connect(uri);
-    console.log("Connected to MongoDB");
+    try {
+        const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/hexanity-bot";
+        await mongoose.connect(uri);
+        console.log("Connected to MongoDB");
 
-    const store = new MongoStore({ mongoose: mongoose });
+        const store = new MongoStore({ mongoose: mongoose });
 
-    client = new Client({
-        authStrategy: new RemoteAuth({
-        store: store,
-        backupSyncIntervalMs: 300000,
-        }),
-    });
+        // Konfigurasi Puppeteer yang lebih lengkap untuk Render.com
+        const puppeteerOptions = {
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu'
+            ],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        };
 
-    client.on("qr", (qr) => {
-        console.log("⚡ Scan this QR code:");
-        qrcode.generate(qr, { small: true });
-    });
+        // Gunakan RemoteAuth dengan konfigurasi yang lebih baik
+        client = new Client({
+            puppeteer: puppeteerOptions,
+            authStrategy: new RemoteAuth({
+                store: store,
+                backupSyncIntervalMs: 300000,
+                dataPath: process.env.WA_DATA_PATH || './wa-data',
+            }),
+            restartOnAuthFail: true,
+            qrMaxRetries: 5,
+        });
 
-    client.on("remote_session_saved", async () => {
-        console.log("💾 Remote session saved");
-        try {
-            const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
-            const chatId = number.replace('+', '') + '@g.us';
-            let message = 'Hai, saya kembali hidup!';
-            await client.sendMessage(chatId, message);
-            console.log(`Message sent to ${number}`);
-        } catch (err) {
-            console.error('Gagal kirim pesan otomatis:', err.message);
-        }
-    });
+        client.on("qr", (qr) => {
+            console.log("⚡ Scan this QR code:");
+            qrcode.generate(qr, { small: true });
+        });
 
-    client.on('message_create', message => {
-        if(message.body === "!RekapSekre"){
-            client.sendMessage(message.from, textRekap());
-        }
-    });
+        client.on("remote_session_saved", async () => {
+            console.log("💾 Remote session saved");
+            try {
+                const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
+                // Perbaikan format chatId untuk grup atau personal chat
+                const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
+                let message = 'Hai, saya kembali hidup!';
+                await client.sendMessage(chatId, message);
+                console.log(`Message sent to ${number}`);
+            } catch (err) {
+                console.error('Gagal kirim pesan otomatis:', err.message);
+            }
+        });
+        
+        client.on('authenticated', (session) => {
+            console.log('✅ AUTHENTICATED');
+        });
 
-    client.once("ready", () => {
-        isReady = true;
-        console.log("✅ Client is ready!");
-    });
+        client.on('auth_failure', (msg) => {
+            console.error('❌ AUTHENTICATION FAILURE', msg);
+        });
 
-    // Tambahkan delay sebelum inisialisasi client
-    setTimeout(() => {
-        client.initialize();
-    }, 10000);
+        client.on('disconnected', (reason) => {
+            console.log('❌ Client was disconnected', reason);
+            // Coba reconnect setelah disconnect
+            setTimeout(() => {
+                client.initialize();
+            }, 10000);
+        });
+
+        client.on('message_create', message => {
+            if(message.body === "!RekapSekre"){
+                client.sendMessage(message.from, textRekap());
+            }
+        });
+
+        client.once("ready", () => {
+            isReady = true;
+            console.log("✅ Client is ready!");
+        });
+
+        // Tambahkan delay sebelum inisialisasi client
+        setTimeout(() => {
+            client.initialize();
+        }, 10000);
+    } catch (error) {
+        console.error('Error initializing WhatsApp bot:', error);
+    }
 };
 
 // Fungsi untuk kirim pesan ke nomor target, dipanggil dari API/cron job
@@ -102,11 +144,17 @@ async function sendMessageToTarget() {
     if (!client || !isReady) {
         throw new Error('WhatsApp client not initialized or not ready');
     }
-    const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
-    const chatId = number.replace('+', '') + '@g.us';
-    let message = textRekap();
-    await client.sendMessage(chatId, message);
-    return `Message sent to ${number}`;
+    try {
+        const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
+        // Perbaikan format chatId
+        const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
+        let message = textRekap();
+        await client.sendMessage(chatId, message);
+        return `Message sent to ${number}`;
+    } catch (error) {
+        console.error('Error sending message:', error);
+        throw error;
+    }
 }
 
 export { HexanityBot, sendMessageToTarget };
