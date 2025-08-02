@@ -4,6 +4,7 @@ import wapkg from 'whatsapp-web.js';
 import qrpkg from 'qrcode-terminal';
 import { MongoStore } from "wwebjs-mongo";
 import mongoosepkg from "mongoose";
+import cron from "node-cron";
 
 function textRekap(){
     const data = getData();
@@ -58,7 +59,7 @@ const HexanityBot = async () => {
 
         const store = new MongoStore({ mongoose: mongoose });
 
-        // Konfigurasi Puppeteer yang lebih lengkap untuk Render.com
+        // Konfigurasi Puppeteer
         const puppeteerOptions = {
             headless: true,
             args: [
@@ -79,8 +80,7 @@ const HexanityBot = async () => {
             puppeteer: puppeteerOptions,
             authStrategy: new RemoteAuth({
                 store: store,
-                backupSyncIntervalMs: 300000,
-                dataPath: process.env.WA_DATA_PATH || './wa-data',
+                backupSyncIntervalMs: 300000
             }),
             restartOnAuthFail: true,
             qrMaxRetries: 5,
@@ -121,10 +121,11 @@ const HexanityBot = async () => {
             }, 10000);
         });
 
-        client.on('message_create', message => {
+        client.on('message_create', async message => {
             if(message.body === "!RekapSekre"){
                 console.log("Requested Rekap from: " + message.from)
-                client.sendMessage(message.from, textRekap());
+                const rekapText = textRekap();
+                client.sendMessage(message.from, rekapText);
             }
         });
 
@@ -160,4 +161,11 @@ async function sendMessageToTarget() {
     }
 }
 
-export { HexanityBot, sendMessageToTarget };
+if (client && isReady){
+    // Tiap berapa?
+    cron.schedule('*/1 * * * *', async() => {
+        await sendMessageToTarget();
+    });
+}
+
+export { HexanityBot };

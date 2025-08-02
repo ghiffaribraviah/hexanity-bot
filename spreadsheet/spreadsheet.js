@@ -20,34 +20,34 @@ await doc.loadInfo();
 const sheet = doc.sheetsByTitle['Rekap Tugas Semester 5'];
 await sheet.loadHeaderRow(3);
 
-const rows = await sheet.getRows();
-
-const rekap_data = {
+let rekap_data = {
     one_day:[],
     deket_dl:[],
     nyantai:[]
 };
 
-function updateData(){
+async function updateData(){
+    const currentRows = await sheet.getRows();
+    
     rekap_data["one_day"] = [];
     rekap_data["deket_dl"] = [];
     rekap_data["nyantai"] = [];
 
-    for(let i = 0; i < rows.length; i++){
-        if(rows[i].get('Tanggal DL') === undefined || "#N/A"){
+    for(let i = 0; i < currentRows.length; i++){
+        if(currentRows[i].get('Tanggal DL') === undefined || currentRows[i].get('Tanggal DL') === "#N/A"){
             break;
         }
 
         const sub = [];
-        sub.push(rows[i].get('Status'));
-        sub.push(rows[i].get('Kode Kelas'));
-        sub.push(rows[i].get('Judul Tugas'));
+        sub.push(currentRows[i].get('Status'));
+        sub.push(currentRows[i].get('Kode Kelas'));
+        sub.push(currentRows[i].get('Judul Tugas'));
         
         if(sub[0].slice(0, 2) == "Lewat DL"){
             continue;
         }
 
-        else if(sub[0].slice(0, 3) == "H-1" || "H-2" || "H-3"){
+        else if(sub[0].slice(0, 3) == "H-1" || sub[0].slice(0, 3) == "H-2" || sub[0].slice(0, 3) == "H-3"){
             rekap_data["deket_dl"].push(sub);
         }
 
@@ -65,16 +65,18 @@ function updateData(){
     console.log("Data updated at:\n" + update_date.getDate() + "/" 
     + (update_date.getMonth() + 1) + "/" + update_date.getFullYear() + "\n"
     + update_date.getHours() + ":" + update_date.getMinutes() + "\n");
-    console.log(rekap_data);
 };
 
-function startUpdate(){
-    updateData();
-    cron.schedule('0,10,20,30,40,50 * * * *', updateData);
+async function startUpdate(){
+    cron.schedule('*/10 * * * *', async () => {
+        await updateData();
+        console.log("Data updated!");
+    });
 }
 
-function getData(){
+async function getData(){
+    await updateData();
     return rekap_data;
 }
 
-export { startUpdate, getData};
+export {startUpdate, getData};
