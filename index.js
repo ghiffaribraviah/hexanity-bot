@@ -1,6 +1,6 @@
 import { HexanityBot } from './whatsapp-bot/whatsapp-bot.js';
 import { startUpdate } from './spreadsheet/spreadsheet.js';
-import './whatsapp-bot/api.js';
+// import './whatsapp-bot/api.js';
 
 startUpdate();
 HexanityBot();
