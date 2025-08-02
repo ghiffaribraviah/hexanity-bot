@@ -60,5 +60,3 @@ function updateData(){
 };
 
 export { updateData };
-
-console.log(updateData());
