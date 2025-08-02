@@ -1,4 +1,4 @@
-import { updateData } from "../spreadsheet/spreadsheet.js";
+import { getData } from "../spreadsheet/spreadsheet.js";
 import 'dotenv/config';
 import wapkg from 'whatsapp-web.js';
 import qrpkg from 'qrcode-terminal';
@@ -6,7 +6,7 @@ import { MongoStore } from "wwebjs-mongo";
 import mongoosepkg from "mongoose";
 
 function textRekap(){
-    const data = updateData();
+    const data = getData();
     const date = new Date();
     const month = date.getMonth() + 1;
     const year = date.getFullYear().toString().slice(2, 4);

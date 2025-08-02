@@ -1,6 +1,7 @@
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import {JWT} from "google-auth-library";
 import 'dotenv/config';
+import cron from "node-cron";
 
 const SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
@@ -21,12 +22,16 @@ await sheet.loadHeaderRow(3);
 
 const rows = await sheet.getRows();
 
+const rekap_data = {
+    one_day:[],
+    deket_dl:[],
+    nyantai:[]
+};
+
 function updateData(){
-    const data = {
-        one_day:[],
-        deket_dl:[],
-        nyantai:[]
-    };
+    rekap_data["one_day"] = [];
+    rekap_data["deket_dl"] = [];
+    rekap_data["nyantai"] = [];
 
     for(let i = 0; i < rows.length; i++){
         if(rows[i].get('Tanggal DL') === undefined || "#N/A"){
@@ -43,20 +48,33 @@ function updateData(){
         }
 
         else if(sub[0].slice(0, 3) == "H-1" || "H-2" || "H-3"){
-            data["deket_dl"].push(sub);
+            rekap_data["deket_dl"].push(sub);
         }
 
         else if(sub[0].slice(0, 2) == "H-"){
-            data["nyantai"].push(sub);
+            rekap_data["nyantai"].push(sub);
         }
 
         else{
-            data["one_day"].push(sub);
+            rekap_data["one_day"].push(sub);
         }
         
     }
 
-    return data;
+    const update_date = new Date()
+    console.log("Data updated at:\n" + update_date.getDate() + "/" 
+    + (update_date.getMonth() + 1) + "/" + update_date.getFullYear() + "\n"
+    + update_date.getHours() + ":" + update_date.getMinutes() + "\n");
+    console.log(rekap_data);
 };
 
-export { updateData };
+function startUpdate(){
+    updateData();
+    cron.schedule('0,10,20,30,40,50 * * * *', updateData);
+}
+
+function getData(){
+    return rekap_data;
+}
+
+export { startUpdate, getData};
