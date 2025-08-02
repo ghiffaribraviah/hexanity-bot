@@ -1,4 +1,4 @@
-import { updateData } from "./spreadsheet.js";
+import { updateData } from "../spreadsheet/spreadsheet.js";
 import 'dotenv/config';
 import wapkg from 'whatsapp-web.js';
 import qrpkg from 'qrcode-terminal';
@@ -8,11 +8,13 @@ import mongoosepkg from "mongoose";
 function textRekap(){
     const data = updateData();
     const date = new Date();
+    const month = date.getMonth() + 1;
     const year = date.getFullYear().toString().slice(2, 4);
+    console.log("Waktu hari ini: " + date.getDate() + " " + month + " " + year);
 
     let text =
     "*#RekapDongSekre*\n" +
-    date.getDate() + "/" + date.getMonth() + "/" + year + "\n\n" +
+    date.getDate() + "/" + month + "/" + year + "\n\n" +
     "*In 24 Hours Alert 🔥*\n";
 
     for(let i = 0; i < data["one_day"].length; i++){
@@ -92,7 +94,7 @@ const HexanityBot = async () => {
         client.on("remote_session_saved", async () => {
             console.log("💾 Remote session saved");
             try {
-                const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
+                const number = process.env.TARGET_NUMBER_ID;
                 // Perbaikan format chatId untuk grup atau personal chat
                 const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
                 let message = 'Hai, saya kembali hidup!';

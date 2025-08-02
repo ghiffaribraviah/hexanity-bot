@@ -4,8 +4,9 @@
   "main": "test.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:wa": "node whatsapp.js",
-    "start:api": "node api.js",
+    "start:wa": "node whatsapp-bot/whatsapp-bot.js",
+    "start:api": "node whatsapp-bot/api.js",
+    "start:sps": "node spreadsheet/spreadsheet.js",
     "start": "node index.js"
   },
   "repository": {
