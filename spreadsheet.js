@@ -29,7 +29,7 @@ function updateData(){
     };
 
     for(let i = 0; i < rows.length; i++){
-        if(rows[i].get('Tanggal DL') === undefined){
+        if(rows[i].get('Tanggal DL') === undefined || "#N/A"){
             break;
         }
 
@@ -60,3 +60,5 @@ function updateData(){
 };
 
 export { updateData };
+
+console.log(updateData());

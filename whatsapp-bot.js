@@ -121,6 +121,7 @@ const HexanityBot = async () => {
 
         client.on('message_create', message => {
             if(message.body === "!RekapSekre"){
+                console.log("Requested Rekap from: " + message.from)
                 client.sendMessage(message.from, textRekap());
             }
         });
@@ -145,7 +146,7 @@ async function sendMessageToTarget() {
         throw new Error('WhatsApp client not initialized or not ready');
     }
     try {
-        const number = process.env.TARGET_NUMBER_ID || '+6281286714480';
+        const number = process.env.TARGET_NUMBER_ID;
         // Perbaikan format chatId
         const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
         let message = textRekap();
