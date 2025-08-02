@@ -17,6 +17,16 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
+// Render health check endpoint to prevent sleeping
+app.get('/healthz', (req, res) => {
+    // Send health status
+    res.status(200).json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
 app.get('/', (req, res) => {
     res.send('Hexanity WA Bot API is running');
 });
