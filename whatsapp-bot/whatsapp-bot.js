@@ -6,14 +6,19 @@ import cron from 'node-cron';
 const { Client, LocalAuth } = wapkg;
 
 function humanizeChat(from, text){
-    const seenTimer = Math.floor(Math.random() * 5) + 1;
-    const typeTimer = Math.floor(Math.random() * 5) + seenTimer + 5;
-    const sendTimer = Math.floor(Math.random() * 5) + typeTimer + 5;
+    const seenTimer = (Math.floor(Math.random() * 5) + 1) * 1000;
+    const typeTimer = (Math.floor(Math.random() * 5) + seenTimer + 5) * 1000;
+    const sendTimer = (Math.floor(Math.random() * 5) + typeTimer + 5) * 1000;
 
     setTimeout(function(){client.sendSeen(from)}, seenTimer);
-    setTimeout(function(){client.sendStateTyping(from), typeTimer});
-    setTimeout(function(){client.sendMessage(from, text), sendTimer});
-    setTimeout(function(){client.clearState(), sendTimer + 0.2});
+    
+    setTimeout(async () => {
+        const chat = await client.getChatById(from);
+        await chat.sendStateTyping();
+    }, typeTimer);
+
+    setTimeout(function(){client.sendMessage(from, text)}, sendTimer);
+    setTimeout(function(){client.clearState()}, sendTimer + 200);
 }
 
 async function dailyReminder(){
