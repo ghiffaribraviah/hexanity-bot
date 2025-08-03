@@ -1,4 +1,4 @@
-import { wa_text, wa_text_update } from "../spreadsheet/text-local.js";
+import { wa_text, wa_text_update } from "../spreadsheet/text-wa.js";
 import 'dotenv/config';
 import wapkg from 'whatsapp-web.js';
 import qrcode from 'qrcode';

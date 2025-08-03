@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:wa": "node whatsapp-bot/whatsapp-bot.js",
     "start:local": "node whatsapp-bot/whatsapp-bot-local.js",
+    "start:discord": "node discord-bot/discord-bot.js",
     "start:api": "node whatsapp-bot/api.js",
     "start:sps": "node spreadsheet/spreadsheet.js",
     "start": "node index.js"
@@ -23,6 +24,7 @@
   "homepage": "https://github.com/ghiffaribraviah/hexanity-bot#readme",
   "description": "",
   "dependencies": {
+    "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "google-auth-library": "^10.2.0",
