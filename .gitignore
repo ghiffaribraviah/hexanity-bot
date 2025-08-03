@@ -1,6 +1,5 @@
 /node_modules
 /.wwebjs_auth
 /.wwebjs_cache
-/wa-data
-*.env
 /wa_data
+*.env
