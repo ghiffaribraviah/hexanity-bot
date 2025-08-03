@@ -7,8 +7,8 @@ const { Client, LocalAuth } = wapkg;
 
 function humanizeChat(from, text){
     const seenTimer = (Math.floor(Math.random() * 5) + 1) * 1000;
-    const typeTimer = (Math.floor(Math.random() * 5) + seenTimer + 5) * 1000;
-    const sendTimer = (Math.floor(Math.random() * 5) + typeTimer + 5) * 1000;
+    const typeTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + seenTimer;
+    const sendTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + typeTimer;
 
     setTimeout(function(){client.sendSeen(from)}, seenTimer);
     
