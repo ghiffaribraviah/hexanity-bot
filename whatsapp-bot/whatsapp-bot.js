@@ -26,6 +26,7 @@ function humanizeChat(from, text){
 }
 
 async function dailyReminder(){
+    console.log("Whatsapp Daily Reminder started!");
     cron.schedule('0 8,20 * * *', async() => {
         const number = process.env.TARGET_NUMBER_ID;
         const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
@@ -85,6 +86,7 @@ client.on('message_create', message => {
 });
 
 wa_text_update();
+dailyReminder();
 
 
 client.initialize();

@@ -43,10 +43,9 @@ async function wa_text_generate(){
 
 async function wa_text_update(){
     wa_text = await wa_text_generate();
+    console.log("Whatsapp Text Update started!");
     cron.schedule('6-59/10 * * * *', async () => {
         wa_text = await wa_text_generate();
-        let date = new Date()
-        console.log("Data updated at: " + date.getHours() + ":" + date.getMinutes());
     });
 }
 
