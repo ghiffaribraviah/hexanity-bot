@@ -2,4 +2,5 @@
 /.wwebjs_auth
 /.wwebjs_cache
 /wa_data
+.png
 *.env

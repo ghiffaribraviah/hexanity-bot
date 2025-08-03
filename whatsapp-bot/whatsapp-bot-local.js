@@ -1,10 +1,9 @@
 import { wa_text, wa_text_update } from "../spreadsheet/text-local.js";
 import 'dotenv/config';
 import wapkg from 'whatsapp-web.js';
-import qrpkg from 'qrcode-terminal';
+import qrcode from 'qrcode';
 import cron from 'node-cron';
 const { Client, LocalAuth } = wapkg;
-const qrcode = qrpkg;
 
 async function dailyReminder(){
     cron.schedule('0 */2 * * *', async() => {
@@ -33,9 +32,10 @@ const client = new Client({
         })
     });
 
-client.on("qr", (qr) => {
-    console.log("⚡ Scan this QR code:");
-    qrcode.generate(qr, { small: true });
+client.on("qr", async (qr) => {
+    console.log("⚡ QR recieved, generating image...");
+    await qrcode.toFile('qr.png', qr);
+    console.log('QR saved as qr.png');
 });
 
 client.on('authenticated', (session) => {
