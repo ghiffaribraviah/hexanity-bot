@@ -20,14 +20,14 @@ await doc.loadInfo();
 const sheet = doc.sheetsByTitle['Rekap Tugas Semester 5'];
 await sheet.loadHeaderRow(3);
 
-let rekap_data = {
-    one_day:[],
-    deket_dl:[],
-    nyantai:[]
-};
-
 async function updateData(){
     const currentRows = await sheet.getRows();
+
+    let rekap_data = {
+        one_day:[],
+        deket_dl:[],
+        nyantai:[]
+    };
     
     rekap_data["one_day"] = [];
     rekap_data["deket_dl"] = [];
@@ -61,22 +61,7 @@ async function updateData(){
         
     }
 
-    const update_date = new Date()
-    console.log("Data updated at:\n" + update_date.getDate() + "/" 
-    + (update_date.getMonth() + 1) + "/" + update_date.getFullYear() + "\n"
-    + update_date.getHours() + ":" + update_date.getMinutes() + "\n");
+    return rekap_data;
 };
 
-async function startUpdate(){
-    cron.schedule('*/10 * * * *', async () => {
-        await updateData();
-        console.log("Data updated!");
-    });
-}
-
-async function getData(){
-    await updateData();
-    return rekap_data;
-}
-
-export {startUpdate, getData};
+export {updateData};

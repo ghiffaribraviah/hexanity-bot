@@ -1,4 +1,4 @@
-import { updateData } from "./spreadsheet-local.js";
+import { updateData } from "./spreadsheet.js";
 import cron from "node-cron";
 
 let dc_text = await dc_text_generate();
