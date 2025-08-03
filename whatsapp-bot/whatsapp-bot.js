@@ -86,7 +86,6 @@ client.on('message_create', message => {
 });
 
 wa_text_update();
-dailyReminder();
 
 
 client.initialize();
