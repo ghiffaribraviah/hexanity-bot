@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:wa": "node whatsapp-bot/whatsapp-bot.js",
+    "start:local": "node whatsapp-bot/whatsapp-bot-local.js",
     "start:api": "node whatsapp-bot/api.js",
     "start:sps": "node spreadsheet/spreadsheet.js",
     "start": "node index.js"
