@@ -18,7 +18,11 @@ function humanizeChat(from, text){
     }, typeTimer);
 
     setTimeout(function(){client.sendMessage(from, text)}, sendTimer);
-    setTimeout(function(){client.clearState()}, sendTimer + 200);
+
+    setTimeout(async () => {
+        const chat = await client.getChatById(from);
+        await chat.clearState();
+    }, sendTimer + 200);
 }
 
 async function dailyReminder(){
