@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { Events, Client, Collection, GatewayIntentBits } from 'discord.js';
+import { Events, Client, Collection, GatewayIntentBits, Options } from 'discord.js';
 import 'dotenv/config';
 import { dc_text_update } from '../spreadsheet/text-discord.js';
 import { loadReminders } from './utils/scheduler.js';
@@ -13,7 +13,24 @@ dc_text_update();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ 
+  intents: [GatewayIntentBits.Guilds],
+  makeCache: Options.cacheWithLimits({
+    ...Options.DefaultMakeCacheSettings,
+		ReactionManager: 0,
+  }),
+  sweepers: {
+		...Options.DefaultSweeperSettings,
+		messages: {
+			interval: 3_600,
+			lifetime: 1_800,
+		},
+		users: {
+			interval: 3_600,
+			filter: () => user => user.bot && user.id !== user.client.user.id,
+		},
+	},
+});
 client.commands = new Collection();
 
 // Load Slash Commands
