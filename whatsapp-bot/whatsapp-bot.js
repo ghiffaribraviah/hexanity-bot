@@ -10,19 +10,22 @@ function humanizeChat(from, text){
     const typeTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + seenTimer;
     const sendTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + typeTimer;
 
-    setTimeout(function(){client.sendSeen(from)}, seenTimer);
+    setTimeout(async () => {
+        const chat = await client.getChatById(from);
+        await chat.sendSeen();
+    }, seenTimer);
     
     setTimeout(async () => {
         const chat = await client.getChatById(from);
         await chat.sendStateTyping();
     }, typeTimer);
 
-    setTimeout(function(){client.sendMessage(from, text)}, sendTimer);
-
     setTimeout(async () => {
         const chat = await client.getChatById(from);
         await chat.clearState();
-    }, sendTimer + 200);
+    }, sendTimer - 500);
+
+    setTimeout(function(){client.sendMessage(from, text)}, sendTimer);
 }
 
 async function dailyReminder(){
