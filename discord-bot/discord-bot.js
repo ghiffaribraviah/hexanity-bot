@@ -6,8 +6,6 @@ import 'dotenv/config';
 import { dc_text_update } from '../spreadsheet/text-discord.js';
 import { loadReminders } from './utils/scheduler.js';
 import { connectDB } from './utils/db.js';
-import cron from 'node-cron';
-import memoryUsage from './utils/memory.js';
 
 const token = process.env.DISCORD_TOKEN;
 dc_text_update();
@@ -58,5 +56,4 @@ async function main() {
   }
 }
 
-cron.schedule("*/5 * * * *", memoryUsage);
 main();
