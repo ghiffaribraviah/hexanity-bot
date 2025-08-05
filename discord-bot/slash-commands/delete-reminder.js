@@ -35,4 +35,5 @@ export async function execute(interaction) {
 
   await Reminder.deleteOne({ guildId });
   await interaction.reply('✅ Reminder berhasil dihapus.');
+  console.log("Deleted Reminder from: " + interaction.guildId);
 }

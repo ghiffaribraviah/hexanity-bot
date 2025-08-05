@@ -55,4 +55,5 @@ export async function execute(interaction) {
   
   await Reminder.create({ guildId, channelId: channel.id, cronExpr: cronExpression});
   await interaction.reply(`✅ Reminder disimpan. Pesan akan dikirim ke <#${channel.id}> dengan jadwal \`${cronExpression}\``);
+  console.log("Requested Reminder from: " + interaction.guildId);
 }

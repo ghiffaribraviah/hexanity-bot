@@ -1,8 +1,18 @@
-import { HexanityBot } from './whatsapp-bot/whatsapp-bot.js';
-import { startUpdate } from './spreadsheet/spreadsheet.js';
-// import './whatsapp-bot/api.js';
+import 'dotenv/config';
+import { startDiscordBot } from './discord-bot/discord-bot.js';
+import { startWhatsappBot } from './whatsapp-bot/whatsapp-bot.js';
 
-startUpdate();
-HexanityBot();
-// Ini script untuk menjalankan whatsapp.js (client WA) dan api.js (API server) secara bersamaan
-// npm run start atau node index.js
+async function main() {
+  console.log("🚀 Starting both bots...");
+
+  try {
+    await Promise.all([
+      startDiscordBot(),
+      startWhatsappBot()
+    ]);
+  } catch (err) {
+    console.error('❌ Error starting bots:', err);
+  }
+}
+
+main();

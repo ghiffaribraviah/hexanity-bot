@@ -18,4 +18,5 @@ export async function execute(interaction) {
   }
 
   await interaction.reply(dc_text);
+  console.log("Requested Rekap from: " + interaction.user.id);
 }

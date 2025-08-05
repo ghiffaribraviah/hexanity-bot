@@ -46,8 +46,6 @@ async function dc_text_update(){
     dc_text = await dc_text_generate();
     cron.schedule('6-59/10 * * * *', async () => {
         dc_text = await dc_text_generate();
-        let date = new Date()
-        console.log("Data updated at: " + date.getHours() + ":" + date.getMinutes());
     });
 }
 
