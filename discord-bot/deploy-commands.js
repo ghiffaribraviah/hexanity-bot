@@ -32,8 +32,17 @@ const rest = new REST().setToken(token);
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
+		// Guild Commands (For Testing)
+		/*
 		const data = await rest.put(
 			Routes.applicationGuildCommands(clientId, guildId),
+			{ body: commands },
+		);
+		*/
+
+		// Global Commands (For Deployment)
+		const data = await rest.put(
+			Routes.applicationCommands(clientId),
 			{ body: commands },
 		);
 
