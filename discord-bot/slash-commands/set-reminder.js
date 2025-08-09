@@ -2,6 +2,7 @@ import { SlashCommandBuilder, ChannelType, MessageFlags } from 'discord.js';
 import cron from 'node-cron';
 import Reminder from '../models/reminder.js'
 import { activeJobs } from '../utils/scheduler.js';
+import { dc_text } from '../../spreadsheet/text-discord.js';
 
 
 export const data = new SlashCommandBuilder()
@@ -48,7 +49,7 @@ export async function execute(interaction) {
   }
 
   const job = cron.schedule(cronExpression, () => {
-    channel.send(message);
+    channel.send(dc_text);
   });
 
   activeJobs.set(guildId, job);
