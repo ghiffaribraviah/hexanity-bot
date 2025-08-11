@@ -14,6 +14,7 @@ export async function startWhatsappBot(){
         const sendTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + typeTimer;
 
         setTimeout(async () => {
+            await client.sendPresenceAvailable();
             const chat = await client.getChatById(from);
             await chat.sendSeen();
         }, seenTimer);
@@ -28,7 +29,12 @@ export async function startWhatsappBot(){
             await chat.clearState();
         }, sendTimer - 500);
 
-        setTimeout(function(){client.sendMessage(from, text)}, sendTimer);
+        setTimeout(function(){
+            client.sendMessage(from, text);
+            setTimeout(async () => {
+                await client.sendPresenceUnavailable();
+            }, 2000); 
+        }, sendTimer);
     }
 
     async function dailyReminder(){
