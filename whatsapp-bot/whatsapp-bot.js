@@ -39,7 +39,7 @@ export async function startWhatsappBot(){
 
     async function dailyReminder(){
         console.log("Whatsapp Daily Reminder started!");
-        cron.schedule('0 8,20 * * *', async() => {
+        cron.schedule('0 18 * * *', async() => {
             const number = process.env.TARGET_NUMBER_ID;
             const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
             humanizeChat(chatId, wa_text);
@@ -90,7 +90,7 @@ export async function startWhatsappBot(){
     });
 
     client.on('message_create', message => {
-        if(message.body === "!RekapSekre"){
+        if(message.body === "#RekapDongSekre"){
             
             console.log("Requested Rekap from: " + message.from);
             humanizeChat(message.from, wa_text);
