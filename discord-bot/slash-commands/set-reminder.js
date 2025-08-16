@@ -15,7 +15,7 @@ export const data = new SlashCommandBuilder()
   .addChannelOption(option =>
     option.setName('channel')
     .setDescription('Channel tempat reminder dikirim')
-    .addChannelTypes(ChannelType.GuildText)
+    .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
     .setRequired(true));
 
 export async function execute(interaction) {
