@@ -39,7 +39,7 @@ export async function startWhatsappBot(){
 
     async function dailyReminder(){
         console.log("Whatsapp Daily Reminder started!");
-        cron.schedule('0 18 * * *', async() => {
+        cron.schedule('0 10,16,22 * * *', async() => {
             const number = process.env.TARGET_NUMBER_ID;
             const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
             humanizeChat(chatId, wa_text);
