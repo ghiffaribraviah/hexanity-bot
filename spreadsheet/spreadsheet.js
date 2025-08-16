@@ -43,11 +43,11 @@ async function updateData(){
         sub.push(currentRows[i].get('Kode Kelas'));
         sub.push(currentRows[i].get('Judul Tugas'));
         
-        if(sub[0].slice(0, 2) == "Lewat DL"){
+        if(sub[0] === "Lewat DL"){
             continue;
         }
 
-        else if(sub[0].slice(0, 3) == "H-1" || sub[0].slice(0, 3) == "H-2" || sub[0].slice(0, 3) == "H-3"){
+        else if(sub[0] === "H-1" || sub[0] === "H-2" || sub[0] === "H-3"){
             rekap_data["deket_dl"].push(sub);
         }
 
