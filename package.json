@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:wa": "node whatsapp-bot/whatsapp-bot.js",
     "start:discord": "node discord-bot/discord-bot.js",
+    "discord:deploy": "node discord-bot/deploy-commands.js",
     "start:api": "node whatsapp-bot/api.js",
     "start:sps": "node spreadsheet/spreadsheet.js",
     "start": "node index.js"
