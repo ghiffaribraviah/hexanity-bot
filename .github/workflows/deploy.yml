@@ -1,0 +1,71 @@
+name: Deploy hexanity-bot di VPS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Mulai SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Konfigurasi VPS Host Key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Pull, install, reload dari repository
+        env:
+          REPO_URL: https://github.com/ghiffaribraviah/hexanity-bot.git
+          BRANCH: main
+          APP_DIR: $HOME/hexanity-bot
+          APP_NAME: hexanity-bot
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+          set -euo pipefail
+          
+          REPO_URL="${REPO_URL}"
+          BRANCH="${BRANCH}"
+          APP_DIR="${APP_DIR}"
+          APP_NAME="${APP_NAME}"
+
+          # PATH buat di VPS
+          export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+          
+          mkdir -p "$APP_DIR"
+          cd "$APP_DIR"
+
+          # Inisialisasi git (kalau belum)
+          if ! git rev-parse --git-dir >/dev/null 2>&1; then
+            git init
+            git remote add origin "$REPO_URL"
+          fi
+
+          # Tarik kode terbaru
+          git fetch --depth=1 origin "$BRANCH"
+          git reset --hard "origin/$BRANCH"
+
+          # Install dependencies untuk produksi
+          if [ -f package-lock.json ]; then
+            npm ci --omit=dev
+          else
+            npm install --omit=dev
+          fi
+          
+          if ! command -v pm2 >/dev/null 2>&1; then
+            sudo npm install -g pm2
+          fi
+
+          # Start/reload PM2
+          if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+            pm2 reload "$APP_NAME"
+          else
+            pm2 start ecosystem.config.js --name "$APP_NAME"
+          fi
+
+          pm2 save
+          EOF
