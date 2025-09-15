@@ -4,12 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:wa": "node whatsapp-bot/whatsapp-bot.js",
-    "start:discord": "node discord-bot/discord-bot.js",
-    "discord:deploy": "node discord-bot/deploy-commands.js",
-    "start:api": "node whatsapp-bot/api.js",
-    "start:sps": "node spreadsheet/spreadsheet.js",
-    "start": "node index.js"
+    "start": "pm2 start ecosystem.config.js"
   },
   "repository": {
     "type": "git",
@@ -31,6 +26,7 @@
     "google-spreadsheet": "^4.1.5",
     "mongoose": "^8.17.0",
     "node-cron": "^4.2.1",
+    "pm2": "^6.0.10",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.23.0",

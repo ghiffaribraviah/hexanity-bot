@@ -24,10 +24,11 @@ jobs:
           BRANCH: main
           APP_DIR: $HOME/hexanity-bot
           APP_NAME: hexanity-bot
+          ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
           set -euo pipefail
-          
+
           REPO_URL="${REPO_URL}"
           BRANCH="${BRANCH}"
           APP_DIR="${APP_DIR}"
@@ -35,19 +36,27 @@ jobs:
 
           # PATH buat di VPS
           export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
-          
+
           mkdir -p "$APP_DIR"
           cd "$APP_DIR"
+          mkdir -p logs
 
           # Inisialisasi git (kalau belum)
           if ! git rev-parse --git-dir >/dev/null 2>&1; then
             git init
-            git remote add origin "$REPO_URL"
+            git remote add origin "$REPO_URL" || git remote set-url origin "$REPO_URL"
           fi
 
           # Tarik kode terbaru
           git fetch --depth=1 origin "$BRANCH"
           git reset --hard "origin/$BRANCH"
+
+          # Simpan .env dari secrets (opsional kalau diset)
+          if [ -n "${ENV_FILE}" ]; then
+            cat > .env << 'EENV'
+          ${ENV_FILE}
+          EENV
+          fi
 
           # Install dependencies untuk produksi
           if [ -f package-lock.json ]; then
@@ -55,17 +64,30 @@ jobs:
           else
             npm install --omit=dev
           fi
-          
+
+          # Install PM2 jika belum ada
           if ! command -v pm2 >/dev/null 2>&1; then
             sudo npm install -g pm2
           fi
 
+          # Pastikan layanan PM2 hidup saat reboot
+          pm2 startup systemd -u "$USER" --hp "$HOME" >/dev/null 2>&1 || true
+
+          # Optional: pasang log rotate untuk menjaga ukuran log
+          if ! pm2 ls | grep -qi logrotate; then
+            pm2 install pm2-logrotate || true
+            pm2 set pm2-logrotate:max_size 10M || true
+            pm2 set pm2-logrotate:retain 10 || true
+            pm2 set pm2-logrotate:compress true || true
+          fi
+
           # Start/reload PM2
           if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-            pm2 reload "$APP_NAME"
+            pm2 reload "$APP_NAME" --update-env
           else
-            pm2 start ecosystem.config.js --name "$APP_NAME"
+            pm2 start ecosystem.config.js --name "$APP_NAME" --env production
           fi
 
           pm2 save
+          pm2 list
           EOF

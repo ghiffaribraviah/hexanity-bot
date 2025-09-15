@@ -1,7 +1,9 @@
-/node_modules
-/.wwebjs_auth
-/.wwebjs_cache
-/wa_data
-.png
+*node_modules
+*.wwebjs_auth
+*.wwebjs_cache
+*wa_data
 *.env
-*.png
+*.env.*
+*./logs
+
+.png
