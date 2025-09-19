@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "pm2 start ecosystem.config.js"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
   "homepage": "https://github.com/ghiffaribraviah/hexanity-bot#readme",
   "description": "",
   "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.19",
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
@@ -28,9 +29,7 @@
     "node-cron": "^4.2.1",
     "pm2": "^6.0.10",
     "qrcode": "^1.5.4",
-    "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.23.0",
-    "wwebjs-mongo": "^1.1.0"
+    "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3"
