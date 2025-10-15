@@ -9,6 +9,9 @@ import path from 'path';
 export async function startWhatsappBot(){
     wa_text_update();
 
+    let connectionFailureCount = 0;
+    const maxConnectionFailures = 3;
+
     function humanizeChat(sock, from, text){
         const seenTimer = (Math.floor(Math.random() * 5) + 1) * 1000;
         const typeTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + seenTimer;
@@ -100,7 +103,7 @@ export async function startWhatsappBot(){
                 syncFullHistory: false,
                 connectTimeoutMs: 60000,
                 defaultQueryTimeoutMs: 60000,
-                keepAliveIntervalMs: 10000,
+                keepAliveIntervalMs: 20000,
                 emitOwnEvents: false,
                 fireInitQueries: true,
                 shouldSyncHistoryMessage: () => false
@@ -110,11 +113,13 @@ export async function startWhatsappBot(){
                 const { connection, lastDisconnect, qr } = update;
 
                 if (qr) {
+                    // Reset failure count on successful QR generation
+                    connectionFailureCount = 0;
+                    
                     const qrTerminal = await qrcode.toString(qr, { type: 'terminal', small: true });
                     console.log("⚡ QR Code received! Scan this QR with WhatsApp:");
                     console.log(qrTerminal);
 
-                    // Simpan juga ke file 
                     try {
                         await qrcode.toFile('qr.png', qr);
                         console.log('💾 QR code also saved as qr.png');
@@ -126,13 +131,33 @@ export async function startWhatsappBot(){
                 if (connection === 'close') {
                     const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
                     console.log('❌ Connection closed:', lastDisconnect?.error?.message || 'Unknown error');
-                    
+
                     if (lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut) {
                         console.log('🚪 Logged out. Clearing auth data...');
                         if (fs.existsSync(authPath)) {
                             fs.rmSync(authPath, { recursive: true, force: true });
                         }
+                        connectionFailureCount = 0; // Reset counter on logout
                         console.log('🔄 Please restart the bot to login again.');
+                    } else if (lastDisconnect?.error?.message === 'Connection Failure') {
+                        connectionFailureCount++;
+                        console.log(`🔄 Connection failure count: ${connectionFailureCount}/${maxConnectionFailures}`);
+                        
+                        if (connectionFailureCount >= maxConnectionFailures) {
+                            console.log('🚨 Too many connection failures. Clearing auth data and requesting new QR...');
+                            if (fs.existsSync(authPath)) {
+                                fs.rmSync(authPath, { recursive: true, force: true });
+                            }
+                            connectionFailureCount = 0; // Reset counter
+                            console.log('🔄 Auth data cleared. Will generate new QR on next connection attempt.');
+                        }
+                        
+                        if (shouldReconnect) {
+                            console.log('🔄 Attempting to reconnect in 5 seconds...');
+                            setTimeout(() => {
+                                connectToWhatsApp();
+                            }, 5000);
+                        }
                     } else if (shouldReconnect) {
                         console.log('🔄 Attempting to reconnect in 5 seconds...');
                         setTimeout(() => {
@@ -141,6 +166,7 @@ export async function startWhatsappBot(){
                     }
                 } else if (connection === 'open') {
                     console.log('✅ WhatsApp Bot connected successfully!');
+                    connectionFailureCount = 0; // Reset counter on successful connection
                     dailyReminder(sock);
                 } else if (connection === 'connecting') {
                     console.log('🔗 Connecting to WhatsApp...');
