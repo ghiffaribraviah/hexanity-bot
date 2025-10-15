@@ -8,7 +8,7 @@ async function main() {
   try {
     await Promise.all([
       startDiscordBot(),
-      startWhatsappBot()
+      startWhatsappBot(),
     ]);
   } catch (err) {
     console.error('❌ Error starting bots:', err);

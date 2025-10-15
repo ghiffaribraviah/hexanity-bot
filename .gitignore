@@ -2,7 +2,9 @@
 *wa_data
 *wa_auth_info
 *.env
-*.env.*
 *./logs
-
-.png
+*media
+*.png
+*.jpg
+*.jpeg
+*sessions

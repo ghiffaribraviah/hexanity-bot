@@ -1,0 +1,37 @@
+services:
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: waha_app
+    restart: unless-stopped
+
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: 10
+
+    env_file:
+      - .env
+
+    volumes:
+      - ${DATA_FOLDER}/sessions:/app/.sessions
+      - ${DATA_FOLDER}/media:/app/.media
+
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.waha.rule=Host(`waha.ieeesbipb.or.id`)
+      - traefik.http.routers.waha.entrypoints=websecure
+      - traefik.http.routers.waha.tls.certresolver=mytlschallenge
+      - traefik.http.services.waha.loadbalancer.server.port=3000
+      - traefik.docker.network=traefik_proxy
+
+    networks:
+      - traefik_proxy
+
+networks:
+  traefik_proxy:
+    external: true

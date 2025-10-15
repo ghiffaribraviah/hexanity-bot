@@ -1,207 +1,258 @@
 import { wa_text, wa_text_update } from "../spreadsheet/text-wa.js";
 import 'dotenv/config';
-import { makeWASocket, DisconnectReason, useMultiFileAuthState, Browsers } from '@whiskeysockets/baileys';
-import qrcode from 'qrcode';
 import cron from 'node-cron';
-import fs from 'fs';
-import path from 'path';
+import axios from 'axios';
 
 export async function startWhatsappBot(){
     wa_text_update();
 
-    let connectionFailureCount = 0;
-    const maxConnectionFailures = 3;
+    // WAHA API Configuration
+    const WAHA_URL = process.env.WAHA_URL || 'http://localhost:3000';
+    const WAHA_SESSION = process.env.WAHA_SESSION || 'default';
+    const WAHA_API_KEY = process.env.WAHA_API_KEY || 'yoursecretkey';
 
-    function humanizeChat(sock, from, text){
+    const wahaHeaders = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': WAHA_API_KEY
+    };
+
+    // Humanized chat function using WAHA API (following WhatsApp guidelines)
+    async function humanizeChat(chatId, text) {
         const seenTimer = (Math.floor(Math.random() * 5) + 1) * 1000;
         const typeTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + seenTimer;
         const sendTimer = (Math.floor(Math.random() * 5) + 5) * 1000 + typeTimer;
 
-        setTimeout(async () => {
-            try {
-                await sock.presenceSubscribe(from);
-                await sock.sendPresenceUpdate('available', from);
-                await sock.readMessages([{ remoteJid: from, id: '' }]);
-            } catch (error) {
-                console.log('Error in presence update:', error.message);
-            }
-        }, seenTimer);
-        
-        setTimeout(async () => {
-            try {
-                await sock.sendPresenceUpdate('composing', from);
-            } catch (error) {
-                console.log('Error in composing update:', error.message);
-            }
-        }, typeTimer);
+        try {
+            // Step 1: Send seen (mark as read)
+            setTimeout(async () => {
+                try {
+                    await axios.post(`${WAHA_URL}/api/sendSeen`, {
+                        session: WAHA_SESSION,
+                        chatId: chatId
+                    }, { headers: wahaHeaders });
+                    console.log('Tanda sudah dibaca dikirim untuk', chatId);
+                } catch (error) {
+                    console.log('Gagal mengirim tanda sudah dibaca:', error.message);
+                }
+            }, seenTimer);
 
-        setTimeout(async () => {
-            try {
-                await sock.sendPresenceUpdate('paused', from);
-            } catch (error) {
-                console.log('Error in paused update:', error.message);
-            }
-        }, sendTimer - 500);
+            // Step 2: Start typing
+            setTimeout(async () => {
+                try {
+                    await axios.post(`${WAHA_URL}/api/startTyping`, {
+                        session: WAHA_SESSION,
+                        chatId: chatId
+                    }, { headers: wahaHeaders });
+                    console.log('Mulai mengetik untuk', chatId);
+                } catch (error) {
+                    console.log('Gagal memulai mengetik:', error.message);
+                }
+            }, typeTimer);
 
-        setTimeout(async function(){
-            try {
-                await sock.sendMessage(from, { text: text });
-                setTimeout(async () => {
-                    try {
-                        await sock.sendPresenceUpdate('unavailable', from);
-                    } catch (error) {
-                        console.log('Error in unavailable update:', error.message);
-                    }
-                }, 2000); 
-            } catch (error) {
-                console.log('Error sending message:', error.message);
-            }
-        }, sendTimer);
+            // Step 3: Stop typing and send message
+            setTimeout(async () => {
+                try {
+                    // Stop typing first
+                    await axios.post(`${WAHA_URL}/api/stopTyping`, {
+                        session: WAHA_SESSION,
+                        chatId: chatId
+                    }, { headers: wahaHeaders });
+                    console.log('Berhenti mengetik untuk', chatId);
+
+                    // Then send the message
+                    const response = await axios.post(`${WAHA_URL}/api/sendText`, {
+                        session: WAHA_SESSION,
+                        chatId: chatId,
+                        text: text
+                    }, { headers: wahaHeaders });
+                    
+                    console.log('✅ Pesan berhasil dikirim ke', chatId);
+                } catch (error) {
+                    console.log('❌ Gagal mengirim pesan:', error.message);
+                }
+            }, sendTimer);
+
+        } catch (error) {
+            console.log('Gagal pada proses chat manusiawi:', error.message);
+        }
     }
 
-    async function dailyReminder(sock){
-        console.log("Whatsapp Daily Reminder started!");
+    // Convert phone number to chatId format
+    function formatChatId(phoneNumber) {
+        // Remove any non-numeric characters and +
+        const cleanNumber = phoneNumber.replace(/[^\d]/g, '');
+        
+        // Check if it's a group (ends with @g.us) or already formatted
+        if (phoneNumber.includes('@g.us') || phoneNumber.includes('@c.us')) {
+            return phoneNumber;
+        }
+        
+        // For individual chats, add @c.us
+        return `${cleanNumber}@c.us`;
+    }
+
+    async function dailyReminder(){
+        console.log("Pengingat harian Whatsapp dimulai!");
         cron.schedule('0 10,16,22 * * *', async() => {
             try {
                 const number = process.env.TARGET_NUMBER_ID;
-                const chatId = number.includes('@g.us') ? number : number.replace('+', '') + '@c.us';
-                humanizeChat(sock, chatId, wa_text);
+                const chatId = formatChatId(number);
+                await humanizeChat(chatId, wa_text);
             } catch (error) {
-                console.log('Error in daily reminder:', error.message);
+                console.log('Gagal pada pengingat harian:', error.message);
             }
         });
     }
 
-    async function connectToWhatsApp() {
+    // Check WAHA service and session status
+    async function checkWAHAStatus() {
         try {
-            const authPath = './wa_auth_info';
-            const { state, saveCreds } = await useMultiFileAuthState(authPath);
-
-            const sock = makeWASocket({
-                auth: state,
-                browser: Browsers.ubuntu('Hexanity Bot'),
-                logger: {
-                    level: 'silent',
-                    trace: () => {},
-                    debug: () => {},
-                    info: () => {},
-                    warn: () => {},
-                    error: () => {},
-                    fatal: () => {},
-                    child: () => ({
-                        level: 'silent',
-                        trace: () => {},
-                        debug: () => {},
-                        info: () => {},
-                        warn: () => {},
-                        error: () => {},
-                        fatal: () => {}
-                    })
-                },
-                markOnlineOnConnect: true,
-                generateHighQualityLinkPreview: true,
-                syncFullHistory: false,
-                connectTimeoutMs: 60000,
-                defaultQueryTimeoutMs: 60000,
-                keepAliveIntervalMs: 20000,
-                emitOwnEvents: false,
-                fireInitQueries: true,
-                shouldSyncHistoryMessage: () => false
+            const response = await axios.get(`${WAHA_URL}/api/sessions/${WAHA_SESSION}`, { 
+                headers: wahaHeaders 
             });
-
-            sock.ev.on('connection.update', async (update) => {
-                const { connection, lastDisconnect, qr } = update;
-
-                if (qr) {
-                    // Reset failure count on successful QR generation
-                    connectionFailureCount = 0;
-                    
-                    const qrTerminal = await qrcode.toString(qr, { type: 'terminal', small: true });
-                    console.log("⚡ QR Code received! Scan this QR with WhatsApp:");
-                    console.log(qrTerminal);
-
-                    try {
-                        await qrcode.toFile('qr.png', qr);
-                        console.log('💾 QR code also saved as qr.png');
-                    } catch (error) {
-                        console.log('Error saving QR file:', error.message);
-                    }
+            
+            const status = response.data.status;
+            console.log(`Status sesi WAHA '${WAHA_SESSION}': ${status}`);
+            
+            if (status === 'WORKING') {
+                console.log('✅ Bot WhatsApp siap digunakan melalui WAHA!');
+                const me = response.data.me;
+                if (me) {
+                    console.log(`Terhubung sebagai: ${me.pushName} (${me.id})`);
                 }
-
-                if (connection === 'close') {
-                    const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-                    console.log('❌ Connection closed:', lastDisconnect?.error?.message || 'Unknown error');
-
-                    if (lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut) {
-                        console.log('🚪 Logged out. Clearing auth data...');
-                        if (fs.existsSync(authPath)) {
-                            fs.rmSync(authPath, { recursive: true, force: true });
-                        }
-                        connectionFailureCount = 0; // Reset counter on logout
-                        console.log('🔄 Please restart the bot to login again.');
-                    } else if (lastDisconnect?.error?.message === 'Connection Failure') {
-                        connectionFailureCount++;
-                        console.log(`🔄 Connection failure count: ${connectionFailureCount}/${maxConnectionFailures}`);
-                        
-                        if (connectionFailureCount >= maxConnectionFailures) {
-                            console.log('🚨 Too many connection failures. Clearing auth data and requesting new QR...');
-                            if (fs.existsSync(authPath)) {
-                                fs.rmSync(authPath, { recursive: true, force: true });
-                            }
-                            connectionFailureCount = 0; // Reset counter
-                            console.log('🔄 Auth data cleared. Will generate new QR on next connection attempt.');
-                        }
-                        
-                        if (shouldReconnect) {
-                            console.log('🔄 Attempting to reconnect in 5 seconds...');
-                            setTimeout(() => {
-                                connectToWhatsApp();
-                            }, 5000);
-                        }
-                    } else if (shouldReconnect) {
-                        console.log('🔄 Attempting to reconnect in 5 seconds...');
-                        setTimeout(() => {
-                            connectToWhatsApp();
-                        }, 5000);
-                    }
-                } else if (connection === 'open') {
-                    console.log('✅ WhatsApp Bot connected successfully!');
-                    connectionFailureCount = 0; // Reset counter on successful connection
-                    dailyReminder(sock);
-                } else if (connection === 'connecting') {
-                    console.log('🔗 Connecting to WhatsApp...');
-                }
-            });
-
-            sock.ev.on('creds.update', saveCreds);
-
-            sock.ev.on('messages.upsert', async (m) => {
-                try {
-                    const message = m.messages[0];
-                    
-                    if (!message.key.fromMe && message.message) {
-                        const messageText = message.message.conversation || 
-                                          message.message.extendedTextMessage?.text || '';
-                        
-                        if (messageText === "#RekapDongSekre") {
-                            console.log("📊 Rekap requested from:", message.key.remoteJid);
-                            humanizeChat(sock, message.key.remoteJid, wa_text);
-                        }
-                    }
-                } catch (error) {
-                    console.log('Error processing message:', error.message);
-                }
-            });
-
-            return sock;
+                return true;
+            } else if (status === 'SCAN_QR_CODE') {
+                console.log('Sesi membutuhkan scan QR. Silakan cek dashboard WAHA.');
+                return false;
+            } else {
+                console.log(`Status sesi: ${status}`);
+                return false;
+            }
         } catch (error) {
-            console.error('❌ Error connecting to WhatsApp:', error.message);
-            console.log('🔄 Retrying connection in 10 seconds...');
-            setTimeout(() => {
-                connectToWhatsApp();
-            }, 10000);
+            console.log('❌ Layanan WAHA tidak tersedia:', error.message);
+            console.log('Pastikan WAHA berjalan di', WAHA_URL);
+            return false;
         }
     }
 
-    await connectToWhatsApp();
+    // Handle incoming message from WAHA webhook
+    async function handleIncomingMessage(messageData) {
+        try {
+            const { from, text, fromMe, id } = messageData;
+            
+            console.log(`Memproses pesan: ${text} dari ${from} (dari saya: ${fromMe})`);
+            
+            // Only respond to messages not sent by us
+            if (!fromMe && text && text.trim() === "#RekapDongSekre") {
+                console.log("Permintaan rekap dari:", from);
+                
+                // Use the exact chatId format from the webhook
+                const chatId = from; // WAHA already provides correct format like 6282111639628@c.us
+                
+                // Send humanized response
+                await humanizeChat(chatId, wa_text);
+            }
+        } catch (error) {
+            console.log('Gagal memproses pesan masuk:', error.message);
+        }
+    }
+
+    // Setup WebSocket connection to listen for WAHA events
+    async function setupWebSocketConnection() {
+        const WebSocket = (await import('ws')).default;
+        
+        // WebSocket configuration
+        const apiKey = WAHA_API_KEY;
+        const baseUrl = WAHA_URL.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
+        const session = WAHA_SESSION;
+        const events = ['message'];
+        
+        // Construct the WebSocket URL with query parameters
+        const queryParams = new URLSearchParams({
+            'x-api-key': apiKey,
+            session: session,
+            events: 'message'
+        });
+        const wsUrl = `${baseUrl}?${queryParams.toString()}`;
+        
+        console.log('🔌 Menghubungkan ke WebSocket:', wsUrl);
+        
+        const socket = new WebSocket(wsUrl);
+        
+        // Handle connection open
+        socket.onopen = () => {
+            console.log('✅ Koneksi WebSocket terhubung ke WAHA');
+            console.log(`Mendengarkan session: ${session}, events: message`);
+        };
+        
+        // Handle incoming messages
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('📨 Menerima WebSocket event:', data.event, 'dari session:', data.session);
+                
+                if (data.event === 'message' && data.payload) {
+                    const { from, body, fromMe, id } = data.payload;
+                    
+                    console.log(`Pesan dari ${from}: ${body} (fromMe: ${fromMe})`);
+                    
+                    // Handle incoming message
+                    handleIncomingMessage({
+                        from: from,
+                        text: body,
+                        fromMe: fromMe,
+                        id: id
+                    });
+                }
+            } catch (error) {
+                console.log('Error parsing WebSocket message:', error.message);
+            }
+        };
+        
+        // Handle errors
+        socket.onerror = (error) => {
+            console.error('❌ WebSocket Error:', error.message);
+        };
+        
+        // Handle connection close
+        socket.onclose = (event) => {
+            console.log('Koneksi WebSocket tertutup, code:', event.code);
+            
+            // Reconnect after 5 seconds
+            console.log('Mencoba reconnect dalam 5 detik...');
+            setTimeout(() => {
+                setupWebSocketConnection();
+            }, 5000);
+        };
+        
+        return socket;
+    }
+
+    // Main initialization
+    async function initializeWAHA() {
+        console.log('Memulai inisialisasi Bot WhatsApp WAHA...');
+        console.log('Menggunakan sesi WAHA:', WAHA_SESSION);
+        
+        // Check WAHA status (session already exists in dashboard)
+        const isReady = await checkWAHAStatus();
+        
+        if (isReady) {
+            // Start daily reminder
+            dailyReminder();
+            
+            // Setup WebSocket connection for real-time events
+            await setupWebSocketConnection();
+            
+            console.log('🎉 Bot WhatsApp WAHA telah terinisialisasi lengkap!');
+        } else {
+            console.log('❌ Sesi WAHA belum siap. Silakan cek dashboard.');
+            
+            // Retry after 30 seconds
+            setTimeout(() => {
+                initializeWAHA();
+            }, 30000);
+        }
+    }
+
+    await initializeWAHA();
 }
