@@ -169,7 +169,7 @@ Pengingat harian Whatsapp dimulai!
 ## Authors
 
 - **Bravi** : [@hoohkun](https://instagram.com/hoohkun)
-- **Raihan PK** : [@raihanpka](https://instagram.com/raihanpk)
+- **Raihan PK** : [@raihanpka](https://instagram.com/raihanpka)
 
 ## Credits
 
